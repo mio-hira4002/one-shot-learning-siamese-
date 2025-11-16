@@ -130,6 +130,8 @@ dmypy.json
 
 # personal
 .idea/
-data_*
 result/
 MNIST_data/
+best_model.pt
+logs/
+*.pt
