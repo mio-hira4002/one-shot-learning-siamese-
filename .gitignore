@@ -135,4 +135,3 @@ MNIST_data/
 best_model.pt
 logs/
 *.pt
-config.py
