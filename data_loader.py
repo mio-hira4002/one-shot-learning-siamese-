@@ -6,6 +6,12 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
+VALID_EXT = (".jpg", ".jpeg", ".png", ".bmp")
+
+def get_image_files(folder):
+    """画像拡張子のみを返す安全な関数"""
+    files = glob(os.path.join(folder, "*"))
+    return [f for f in files if f.lower().endswith(VALID_EXT)]
 
 class SiameseDataset(Dataset):
     def __init__(self, root_dir):
@@ -27,7 +33,7 @@ class SiameseDataset(Dataset):
                 self.classes.append(d)
         print("[DEBUG] 有効クラス =", self.classes)
         self.image_paths = {
-            cls: glob(os.path.join(root_dir, cls, "*"))
+            cls: get_image_files(os.path.join(root_dir, cls))
             for cls in self.classes
         }
         for cls in self.classes:
@@ -36,7 +42,7 @@ class SiameseDataset(Dataset):
         for cls, paths in self.image_paths.items():
             for p in paths:
                 self.all_images.append((p, cls))
-
+                
     def __len__(self):
         return len(self.all_images)
 

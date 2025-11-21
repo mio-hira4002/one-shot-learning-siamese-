@@ -59,15 +59,24 @@ class Trainer(object):
             # checkpoint
             if valid_acc > best_valid_acc: 
                 best_valid_acc = valid_acc
-                torch.save(model.state_dict(), "best_model.pt")
-                print(" → Best model saved.")
+                os.makedirs(self.config.logs_dir, exist_ok=True)
+                checkpoint = {
+                    'epoch': epoch,
+                    'model_state': model.state_dict(),
+                    'optimizer_state': optimizer.state_dict(),
+                    'best_valid_acc': best_valid_acc
+                }
+                torch.save(checkpoint, os.path.join(self.config.logs_dir, "best_model.pth"))
+                print(f" → Best model saved to {self.config.logs_dir}/best_model.pth")
             scheduler.step()
 
     #テスト
     def test(self):
         print("\n========== TEST ==========")
         model = SiameseNet().to(self.device)
-        model.load_state_dict(torch.load("best_model.pt"))
+        checkpoint = torch.load(os.path.join(self.config.logs_dir, "best_model.pth"))
+        model.load_state_dict(checkpoint['model_state'])
+        print(f"Loaded model from {self.config.logs_dir}/best_model.pth (epoch {checkpoint['epoch']}, acc {checkpoint['best_valid_acc']:.4f})")
         test_loader = get_test_loader(self.config.data_dir)
         correct = 0
         with torch.no_grad():
