@@ -108,6 +108,7 @@ def compare_folder(base_img_path, folder_path):
     except FileNotFoundError as e:
         print(f"[!] Error: base image not found: {base_img_path}")
         return
+    base_filename = os.path.basename(base_img_path)
     print("\n[DEBUG] --- 畳み込み層ごとの出力 ---")
     x = base_img.clone()
     for i, layer in enumerate(model.conv):
@@ -146,6 +147,7 @@ def compare_folder(base_img_path, folder_path):
             score = torch.sigmoid(out).item()
 
             print("---------------------------------------------------")
+            print(f"[DEBUG] 比較画像: base={base_filename} vs target={filename}")
             print(f"[DEBUG] emb_base.shape: {emb_base.shape}")
             print(f"[DEBUG] emb_img.shape : {emb_img.shape}")
             print(f"[DEBUG] L1距離の総和: {l1_distance:.4f}")
