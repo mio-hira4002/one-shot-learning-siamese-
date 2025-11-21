@@ -1,38 +1,152 @@
 # 🐾 Siamese One-Shot Learning（画像識別モデル）
 
-本プロジェクトは **Siamese Neural Network（双子ネットワーク）** を応用し、  
-犬の画像を用いた「個体識別」および「特徴差分の可視化」を目的としています。   
+手書き動物の画像識別モデルの構築を行いました。 
+Siamese Networkっていう手法を使って、2枚の画像が同じ個体かどうか判定します。
+手書き動物は、６クラス＊３０枚用意しました。
 
 ---
 
-## 🧠 プロジェクト概要
+## 📍特徴
 
-### 🎯 目的
-
-- 犬の画像から **同一個体かどうかを判定** するAIモデルを構築。  
-- Siamese Network により、画像ペアの特徴量差を学習し、類似度スコアを算出。  
-- 畳み込み層（Conv層）の **特徴マップ差分を可視化** して識別根拠を明示。
-
-### 🐾 特徴
-
-- 🐕 画像比較の自動処理（個体識別スコアの算出）  
-- 🦴 畳み込み層の特徴マップを可視化  
-- 🐩 未学習モデルを利用した構造確認・実験に対応  
-- 🐾 Fire コマンドによる柔軟な CLI 操作（`compare` / `batch`）
+-  犬やキリンの画像を2枚比較して、同じ個体か判定
+-  類似度スコア（0〜1）を計算
+-  特徴マップの可視化で、どこを見て判断してるかチェック
 
 ---
 
-## 📂 ディレクトリ構成
+##  📁ファイル構成
 
-```plaintext
-siamese-one-shot-pytorch/
-│
-├── main.py               # メインスクリプト（比較・可視化）
-├── model.py              # Siamese Network 定義
-├── requirements.txt      # 依存ライブラリ一覧
-│
-└── README.md             # 本ファイル
-data/                 # 犬の画像データ
-├── dog1.jpg          # 基準画像（比較元）
-├── dog2.jpg          # 比較対象
-└── ...               # その他画像
+```
+siamese network/
+├── main.py          # 推論用（画像比較・可視化）
+├── trainer.py       # 学習用（モデルを訓練）
+├── model.py         # Siamese Networkの定義
+├── data_loader.py   # データ読み込み
+├── config.py        # 設定ファイル
+└── requirements.txt # 必要なライブラリ
+
+data2/               # 学習データ（dog 30枚、giraffe 30枚）
+data3/               # 推論テスト用（dog 3枚、giraffe 3枚）
+```
+
+---
+
+## ⚙️ セットアップ
+
+### 1. 必要なライブラリをインストール
+
+```bash
+cd "siamese network"
+pip install -r requirements.txt
+```
+
+### 2. 学習データの準備
+
+- 似た種類の画像３０枚、６クラス分用意する
+- それぞれ以下のようなフォルダ内にクラスごとのファイルを作成し、画像を保管してください
+`data2/`に以下の構造でデータを配置：
+
+```
+data2/
+├── dog/
+│   ├── dog1.jpg
+│   ├── dog2.jpg
+│   └── ...
+└── giraffe/
+    ├── giraffe 1.jpeg
+    ├── giraffe 2.jpeg
+    └── ...
+```
+
+---
+
+## 実行の手順
+
+### 学習する 🐶
+
+```bash
+python trainer.py
+```
+
+- `data2/`のデータで学習
+- 学習済みモデルは`logs/best_model.pth`に保存される
+- エポック数やバッチサイズは`config.py`で変更可能
+
+### 推論する（2枚の画像を比較）🐈
+
+```bash
+python main.py compare --img1_path=../data3/dog1のコピー.jpg --img2_path=../data3/dog2のコピー.jpg
+```
+
+### フォルダ内の画像を一括比較　🐕
+
+```bash
+python main.py batch --base_img_path=../data3/dog1のコピー.jpg --folder_path=../data3
+```
+
+### data3で類似度マトリックスを可視化 📊
+
+```bash
+python main.py infer_data3
+```
+
+- `data3/`内の全画像について、ペアごとの類似度を計算
+- ヒートマップで可視化して保存
+
+---
+
+## 📊 出力例
+
+### 類似度スコア
+
+```
+類似度スコア（0〜1）: 0.8234
+→ 同一個体の可能性あり
+```
+
+### 類似度マトリックス
+
+`data_output/similarity_matrix_data3.png`に保存されます。
+
+---
+
+## 🔧 設定変更
+
+`config.py`で以下を変更できます：
+
+```python
+data_dir = "../data2"     # 学習データのパス
+batch_size = 16           # バッチサイズ
+epochs = 10               # エポック数
+lr = 0.0005               # 学習率
+```
+---
+---
+
+## 🐾 仕組み
+
+### Siamese Networkって？
+
+2つの画像を別々のConvNetに通して特徴量を抽出。  
+実は**同じ重みを共有**してるから「双子（Siamese）」って呼ばれてる。
+
+```
+画像1 → ConvNet ┐
+                ├→ 特徴量差を計算 → 類似度スコア
+画像2 → ConvNet ┘
+（同じ重み）
+```
+
+類似度が高ければ「同じ個体」、低ければ「別個体」って判定する感じ。
+
+---
+
+## 💡 Tips
+
+- 🐕 データが少なくても学習できる（One-Shot Learning）
+- 📸 画像は自動でリサイズ＆グレースケール化される
+- 🎯 閾値（0.5）より大きければ「同じ」と判定
+
+---
+
+🐕 Happy Coding! 🐾
