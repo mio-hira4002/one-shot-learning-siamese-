@@ -75,13 +75,13 @@ python trainer.py
 ### 推論する（2枚の画像を比較）🐈
 
 ```bash
-python main.py compare --img1_path=../data3/dog1のコピー.jpg --img2_path=../data3/dog2のコピー.jpg
+python main.py compare --img1_path=../data3/dog1.jpg --img2_path=../data3/dog2.jpg
 ```
 
 ### フォルダ内の画像を一括比較　🐕
 
 ```bash
-python main.py batch --base_img_path=../data3/dog1のコピー.jpg --folder_path=../data3
+python main.py batch --base_img_path=../data3/dog1.jpg --folder_path=../data3
 ```
 
 ### data3で類似度マトリックスを可視化 📊
