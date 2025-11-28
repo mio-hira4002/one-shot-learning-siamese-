@@ -9,7 +9,6 @@ from torchvision import transforms
 VALID_EXT = (".jpg", ".jpeg", ".png", ".bmp")
 
 def get_image_files(folder):
-    """画像拡張子のみを返す安全な関数"""
     files = glob(os.path.join(folder, "*"))
     return [f for f in files if f.lower().endswith(VALID_EXT)]
 
@@ -19,7 +18,16 @@ class SiameseDataset(Dataset):
         self.transform = transforms.Compose([
             transforms.Resize((105, 105)),
             transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
         ])
+
+        # train_transforms = transforms.Compose([
+        #     transforms.RandomHorizontalFlip(), #ランダムに反転
+        #     transforms.ColorJitter(), #明るさ
+        #     transforms.RandomRotation(10), #回転
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.5),(0.5))
+        # ])#train
         all_dirs = os.listdir(root_dir)
         self.classes = []
         for d in all_dirs:
@@ -65,17 +73,17 @@ class SiameseDataset(Dataset):
         return img1, img2, torch.tensor(label, dtype=torch.float32)
 
 
-def get_train_validation_loader(data_dir, batch_size, *args, **kwargs):
+def train_validation_dataset(data_dir, batch_size, *args, **kwargs):
     dataset = SiameseDataset(data_dir)
     train_size = int(0.8 * len(dataset))
     valid_size = len(dataset) - train_size
     train_ds, valid_ds = torch.utils.data.random_split(dataset, [train_size, valid_size])
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    valid_loader = DataLoader(valid_ds, batch_size=batch_size, shuffle=True)
-    return train_loader, valid_loader
+    train_dataloader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    valid_dataloader = DataLoader(valid_ds, batch_size=batch_size, shuffle=False)
+    return train_dataloader, valid_dataloader
 
 
-def get_test_loader(data_dir):
+def test_dataset(data_dir):
     dataset = SiameseDataset(data_dir)
     test_loader = DataLoader(dataset, batch_size=1, shuffle=False)
     return test_loader
