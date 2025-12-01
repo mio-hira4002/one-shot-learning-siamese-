@@ -2,7 +2,6 @@
 
 手書き動物の画像識別モデルの構築を行いました。 
 Siamese Networkっていう手法を使って、2枚の画像が同じ個体かどうか判定します。
-手書き動物は、６クラス＊３０枚用意しました。
 
 ---
 
@@ -25,8 +24,8 @@ siamese network/
 ├── config.py        # 設定ファイル
 └── requirements.txt # 必要なライブラリ
 
-data2/               # 学習データ（dog 30枚、giraffe 30枚）
-data3/               # 推論テスト用（dog 3枚、giraffe 3枚）
+data2/               # 学習データ（dog 30枚、giraffe 30枚...）
+data3/               # 推論テスト用（dog 3枚、giraffe 3枚...）
 ```
 
 ---
@@ -57,6 +56,16 @@ data2/
     ├── giraffe 2.jpeg
     └── ...
 ```
+data3/
+├── dog/
+│   ├── dog1.jpg
+│   ├── dog2.jpg
+│   └── ...
+└── giraffe/
+    ├── giraffe 1.jpeg
+    ├── giraffe 2.jpeg
+    └── ...
+
 
 ---
 
@@ -75,13 +84,13 @@ python trainer.py
 ### 推論する（2枚の画像を比較）🐈
 
 ```bash
-python main.py compare --img1_path=../data3/dog1.jpg --img2_path=../data3/dog2.jpg
+python main.py compare --img1_path=../data3/dog 1.jpg --img2_path=../data3/dog 2.jpg
 ```
 
 ### フォルダ内の画像を一括比較　🐕
 
 ```bash
-python main.py batch --base_img_path=../data3/dog1.jpg --folder_path=../data3
+python main.py batch --base_img_path=../data3/dog 1.jpg --folder_path=../data3
 ```
 
 ### data3で類似度マトリックスを可視化 📊
