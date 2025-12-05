@@ -154,10 +154,10 @@ def train_validation_dataset(data_dir, batch_size, use_otsu=False, *args, **kwar
     return train_dataloader, valid_dataloader
 
 
-# def test_dataset(data_dir):
-#     dataset = SiameseDataset(data_dir)
-#     test_loader = DataLoader(dataset, batch_size=1, shuffle=False)
-#     return test_loader
+def test_dataset(data_dir):
+    dataset = SiameseDataset(data_dir)
+    test_loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    return test_loader
 
 
 if __name__ == "__main__":
