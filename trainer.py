@@ -3,7 +3,7 @@ import torch
 from torchvision import transforms
 import torch.optim as optim
 import numpy as np
-from data_loader import train_validation_dataset
+from data_loader import train_validation_dataset, test_dataset
 import matplotlib.pyplot as plt
 
 from model import SiameseNet
@@ -114,8 +114,6 @@ class Trainer(object):
     #テスト
     def test(self):
         print("\n========== TEST ==========")
-        
-        # モデル準備
         model = SiameseNet().to(self.device)
         checkpoint_path = os.path.join(self.config.logs_dir, "best_model.pth")
 
@@ -127,9 +125,7 @@ class Trainer(object):
         model.load_state_dict(checkpoint['model_state'])
         print(f"Loaded model from {checkpoint_path} (epoch {checkpoint['epoch']}, acc {checkpoint['best_valid_acc']:.4f})")
 
-        # テストデータ読み込み
         test_loader = test_dataset(self.config.data_dir)
-
         correct = 0
         total = 0
 
@@ -137,24 +133,19 @@ class Trainer(object):
         with torch.no_grad():
             for x1, x2, y in test_loader:
                 x1, x2, y = x1.to(self.device), x2.to(self.device), y.to(self.device)
-
                 out = model(x1, x2)
                 pred = (torch.sigmoid(out) > 0.5).long()
-
                 correct += (pred.squeeze() == y.long()).sum().item()
                 total += y.size(0)
 
         test_acc = correct / total
         print(f"[Test Accuracy] {test_acc:.4f}")
-                # ----- 可視化用リスト -----
         scores = []
         labels_list = []
-
         model.eval()
         scores = []
         labels_list = []
 
-        #testグラフの生成に必要なコード
         with torch.no_grad():
             for x1, x2, y in test_loader:
                 x1, x2, y = x1.to(self.device), x2.to(self.device), y.to(self.device)
@@ -165,28 +156,20 @@ class Trainer(object):
                 scores.append(prob.cpu().item())
                 labels_list.append(y.cpu().item())
 
-
-        # --------- グラフ描画 ---------
         plt.style.use("ggplot")
         plt.figure(figsize=(8, 4))
-
         plt.hist([s for s, t in zip(scores, labels_list) if t == 1],
                  bins=30, alpha=0.6, label="Positive (Same Class)")
         plt.hist([s for s, t in zip(scores, labels_list) if t == 0],
                  bins=30, alpha=0.6, label="Negative (Different Class)")
-
         plt.title("Test Score Distribution (Sigmoid Output)")
         plt.xlabel("Score")
         plt.ylabel("Frequency")
         plt.legend()
         plt.show()
-
-
         
 
 if __name__ == "__main__":
     trainer = Trainer(config())
     trainer.train()
     trainer.test()
-    #if __name__ == "__main__":について整理すると pythonのファイルは全て自動で 用意されている"__name__" という変数がある。
-    # 実際に"python 3 trainer.py"で直接そのファイルを実行した場合のみ、指定されたtrainer.py内の__name__変数が__main__として設定される。
