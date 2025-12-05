@@ -3,7 +3,7 @@ import torch
 from torchvision import transforms
 import torch.optim as optim
 import numpy as np
-from data_loader import train_validation_dataset, test_dataset
+from data_loader import train_validation_dataset
 import matplotlib.pyplot as plt
 
 from model import SiameseNet
@@ -24,12 +24,31 @@ class Trainer(object):
     def train(self):
         train_loader, valid_loader = train_validation_dataset(
             self.config.data_dir,
-            self.config.batch_size
+            self.config.batch_size,
+            use_otsu=True
         )
+
+        #前処理できているかチェック
+        import matplotlib.pyplot as plt
+        sample_img1, sample_img2, sample_label = next(iter(train_loader))
+        img1_np = sample_img1[0].squeeze().numpy()
+        img2_np = sample_img2[0].squeeze().numpy()
+        plt.figure(figsize=(8, 4))
+        plt.subplot(1, 2, 1)
+        plt.imshow(img1_np, cmap="gray")
+        plt.title("")
+        plt.axis("off")
+        plt.subplot(1, 2, 2)
+        plt.imshow(img2_np, cmap="gray")
+        plt.title("")
+        plt.axis("off")
+        plt.tight_layout()
+        plt.show()
+
 
         model = SiameseNet().to(self.device)
         #重みの減衰を追加 weight_decay=1e-5
-        optimizer = optim.Adam(model.parameters(), lr=self.config.lr)
+        optimizer = optim.Adam(model.parameters(), lr=self.config.lr, weight_decay=1e-5)
         #学習率を徐々に下げる
         scheduler = CosineAnnealingLR(optimizer, T_max=self.config.epochs)
         #シグモイド＋BCE をまとめた2値分類用損失関数
@@ -91,6 +110,20 @@ class Trainer(object):
         plt.plot(self.val_losses, label="validation loss")
         plt.legend()
         plt.show()
+
+        accs = np.array(self.accs)
+        val_accs = np.array(self.val_accs)
+
+        #平均値 ± 標準偏差
+        # print("Accuracy (mean ± std):")
+        # print(f"Train : {accs.mean():.4f} ± {accs.std():.4f}")
+        # print(f"Valid : {val_accs.mean():.4f} ± {val_accs.std():.4f}\n")
+
+        #改善度合い（差分の平均と標準偏差）
+        # diff = val_accs - accs
+        # print("Improvement (Valid - Train):")
+        # print(f"Mean : {diff.mean():.4f}")
+        # print(f"Std  : {diff.std():.4f}")
 
 
             # for batch_idx, (x1, x2, y) in enumerate(tqdm(train_loader, colour="green")):
