@@ -111,83 +111,82 @@ class Trainer(object):
         plt.legend()
         plt.show()
 
-        accs = np.array(self.accs)
-        val_accs = np.array(self.val_accs)
-
-        #平均値 ± 標準偏差
-        # print("Accuracy (mean ± std):")
-        # print(f"Train : {accs.mean():.4f} ± {accs.std():.4f}")
-        # print(f"Valid : {val_accs.mean():.4f} ± {val_accs.std():.4f}\n")
-
-        #改善度合い（差分の平均と標準偏差）
-        # diff = val_accs - accs
-        # print("Improvement (Valid - Train):")
-        # print(f"Mean : {diff.mean():.4f}")
-        # print(f"Std  : {diff.std():.4f}")
-
-
-            # for batch_idx, (x1, x2, y) in enumerate(tqdm(train_loader, colour="green")):
-            #     x1, x2, y = x1.to(self.device), x2.to(self.device), y.to(self.device)
-            #     out = model(x1, x2)
-            #     loss = criterion(out, y.unsqueeze(1))
-            #     optimizer.zero_grad()
-            #     loss.backward()
-            #     optimizer.step()
-            #     train_loss += loss.item()
-            #     current_lr = optimizer.param_groups[0]["lr"]
-            #     print("[Train] epoch={}  batch={}/{}  loss={:.4f}  lr={:.6f}".format(
-            #         epoch, batch_idx, len(train_loader), loss.item(), current_lr)
-            #     )
-
-                
-            # train_loss /= len(train_loader)
-            # # Evaluation mode
-            # model.eval() 
-            # valid_correct = 0
-            # with torch.no_grad():
-            #     for batch_idx, (x1, x2, y) in enumerate(tqdm(valid_loader)):
-            #         x1, x2, y = x1.to(self.device), x2.to(self.device), y.to(self.device)
-            #         out = model(x1, x2)
-            #         pred = (torch.sigmoid(out) > 0.5).long()
-            #         valid_correct += (pred.squeeze() == y.long()).sum().item()
-            # valid_acc = valid_correct / len(valid_loader.dataset)
-            # print(f"[Epoch {epoch}] Train Loss: {train_loss:.4f}  Valid Acc: {valid_acc:.4f}")
-            # # checkpoint
-            # if valid_acc > best_valid_acc: 
-            #     best_valid_acc = valid_acc
-            #     os.makedirs(self.config.logs_dir, exist_ok=True)
-            #     checkpoint = {
-            #         'epoch': epoch,
-            #         'model_state': model.state_dict(),
-            #         'optimizer_state': optimizer.state_dict(),
-            #         'best_valid_acc': best_valid_acc
-            #     }
-            #     torch.save(checkpoint, os.path.join(self.config.logs_dir, "best_model.pth"))
-            #     print(f" → Best model saved to {self.config.logs_dir}/best_model.pth")
-            # scheduler.step()
-
     #テスト
-    # def test(self):
-    #     print("\n========== TEST ==========")
-    #     model = SiameseNet().to(self.device)
-    #     checkpoint = torch.load(os.path.join(self.config.logs_dir, "best_model.pth"))
-    #     model.load_state_dict(checkpoint['model_state'])
-    #     print(f"Loaded model from {self.config.logs_dir}/best_model.pth (epoch {checkpoint['epoch']}, acc {checkpoint['best_valid_acc']:.4f})")
-    #     test_loader = get_test_loader(self.config.data_dir)
-    #     correct = 0
-    #     with torch.no_grad():
-    #         for batch_idx, (x1, x2, y) in enumerate(tqdm(test_loader, colour="green")):
-    #             x1, x2, y = x1.to(self.device), x2.to(self.device), y.to(self.device)
-    #             out = model(x1, x2)
-    #             score = torch.sigmoid(out)
-    #             pred = (torch.sigmoid(out) > 0.5).long()
-    #             correct += (pred.squeeze() == y.long()).sum().item()
-    #             print(f"[Test] batch={batch_idx}/{len(test_loader)}  score={score.item():.4f}  "
-    #                   f"pred={pred.item()}  label={y.item()}")
-    #     test_acc = correct / len(test_loader.dataset)
-    #     print(f"[Test Acc] {test_acc:.4f}")
+    def test(self):
+        print("\n========== TEST ==========")
+        
+        # モデル準備
+        model = SiameseNet().to(self.device)
+        checkpoint_path = os.path.join(self.config.logs_dir, "best_model.pth")
+
+        if not os.path.exists(checkpoint_path):
+            print("No checkpoint found! Run training first.")
+            return
+
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        model.load_state_dict(checkpoint['model_state'])
+        print(f"Loaded model from {checkpoint_path} (epoch {checkpoint['epoch']}, acc {checkpoint['best_valid_acc']:.4f})")
+
+        # テストデータ読み込み
+        test_loader = test_dataset(self.config.data_dir)
+
+        correct = 0
+        total = 0
+
+        model.eval()
+        with torch.no_grad():
+            for x1, x2, y in test_loader:
+                x1, x2, y = x1.to(self.device), x2.to(self.device), y.to(self.device)
+
+                out = model(x1, x2)
+                pred = (torch.sigmoid(out) > 0.5).long()
+
+                correct += (pred.squeeze() == y.long()).sum().item()
+                total += y.size(0)
+
+        test_acc = correct / total
+        print(f"[Test Accuracy] {test_acc:.4f}")
+                # ----- 可視化用リスト -----
+        scores = []
+        labels_list = []
+
+        model.eval()
+        scores = []
+        labels_list = []
+
+        #testグラフの生成に必要なコード
+        with torch.no_grad():
+            for x1, x2, y in test_loader:
+                x1, x2, y = x1.to(self.device), x2.to(self.device), y.to(self.device)
+
+                out = model(x1, x2)
+                prob = torch.sigmoid(out).squeeze()
+
+                scores.append(prob.cpu().item())
+                labels_list.append(y.cpu().item())
+
+
+        # --------- グラフ描画 ---------
+        plt.style.use("ggplot")
+        plt.figure(figsize=(8, 4))
+
+        plt.hist([s for s, t in zip(scores, labels_list) if t == 1],
+                 bins=30, alpha=0.6, label="Positive (Same Class)")
+        plt.hist([s for s, t in zip(scores, labels_list) if t == 0],
+                 bins=30, alpha=0.6, label="Negative (Different Class)")
+
+        plt.title("Test Score Distribution (Sigmoid Output)")
+        plt.xlabel("Score")
+        plt.ylabel("Frequency")
+        plt.legend()
+        plt.show()
+
+
+        
 
 if __name__ == "__main__":
     trainer = Trainer(config())
     trainer.train()
-    # trainer.test()
+    trainer.test()
+    #if __name__ == "__main__":について整理すると pythonのファイルは全て自動で 用意されている"__name__" という変数がある。
+    # 実際に"python 3 trainer.py"で直接そのファイルを実行した場合のみ、指定されたtrainer.py内の__name__変数が__main__として設定される。
