@@ -3,7 +3,7 @@ import torch
 from torchvision import transforms
 import torch.optim as optim
 import numpy as np
-from data_loader import train_validation_dataset, test_dataset
+from data_loader import train_validation_dataset
 import matplotlib.pyplot as plt
 
 from model import SiameseNet
@@ -24,8 +24,27 @@ class Trainer(object):
     def train(self):
         train_loader, valid_loader = train_validation_dataset(
             self.config.data_dir,
-            self.config.batch_size
+            self.config.batch_size,
+            use_otsu=True
         )
+
+        #前処理できているかチェック
+        import matplotlib.pyplot as plt
+        sample_img1, sample_img2, sample_label = next(iter(train_loader))
+        img1_np = sample_img1[0].squeeze().numpy()
+        img2_np = sample_img2[0].squeeze().numpy()
+        plt.figure(figsize=(8, 4))
+        plt.subplot(1, 2, 1)
+        plt.imshow(img1_np, cmap="gray")
+        plt.title("")
+        plt.axis("off")
+        plt.subplot(1, 2, 2)
+        plt.imshow(img2_np, cmap="gray")
+        plt.title("")
+        plt.axis("off")
+        plt.tight_layout()
+        plt.show()
+
 
         model = SiameseNet().to(self.device)
         #重みの減衰を追加 weight_decay=1e-5
